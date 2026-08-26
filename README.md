@@ -141,8 +141,12 @@ mid-plane, because that is where a real crease lives. The parsed linework is
 drawn back onto both faces of the board in its original cut/crease colours, so
 you can see the 3D panels really are the parsed 2D geometry.
 
-The animation staggers each panel by its depth in the tree, so the walls come up
-first and the tabs tuck in last. The slider scrubs the same parameter by hand.
+The animation gives each depth of the tree a slice of the 0→1 fold parameter, so
+the walls come up first and the tabs tuck in last. The slices are sized by how
+much card is moving at that depth rather than split evenly — this carton ends in
+a six-deep chain of small internal lock tabs, and an even split would spend more
+than half the animation on panels already sealed inside the closed box. The
+slider scrubs the same parameter by hand.
 
 ---
 
