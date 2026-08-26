@@ -210,12 +210,21 @@ folds to the back of the box carries the part of the flat that was printed there
 For a bitmap dieline the uploaded image *is* the sheet, so real artwork shows on
 the folded box; for vector input the parsed linework is drawn instead. Verified
 by mapping a labelled sheet: FRONT, BACK, TOP and BASE each land on the right
-face. **Known limitation:** the board is printed on both faces from one sheet
-image, so text on the top and bottom panels reads mirrored when viewed head-on
-from directly above or below. It reads correctly from the normal three-quarter
-product angle. Fixing it properly needs per-panel handedness derived from each
-panel's folded orientation, which is not done — the toggle is there so it can be
-turned off.
+face, each reading the right way round when viewed from that face's own side.
+(Seen from the opposite side of the box, text on a face reads upside down —
+which is what happens when you walk around a real carton, not a bug.)
+
+Getting the handedness right is the part worth explaining. The board has two
+faces and you look at them from opposite sides, so the outward one — the -z cap,
+which the fold turns into the outside of the box — is flipped in u. The flip is
+about the panel's *own* x-extent rather than the sheet's: mirroring across the
+whole sheet would make a panel sample some other panel's artwork. Because a fold
+is a rigid rotation and rigid rotations preserve handedness, getting this right
+once in the panel's own frame makes it right for every panel at every fold angle.
+
+The one simplification is that the sheet is printed on both faces of the board,
+so the artwork is also visible from inside the box; a real carton prints one
+side. The toggle turns it off.
 
 **Not handled.** Non-planar or curved creases; panels that must bend rather than
 hinge; collision between panels (the fold is kinematic, not physical); dielines
