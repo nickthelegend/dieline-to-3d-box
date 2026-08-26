@@ -57,6 +57,18 @@ export function buildFoldTree(arr: Arrangement): FoldTree {
     const k = key(h.panels[0], h.panels[1])
     ;(grouped.get(k) ?? grouped.set(k, []).get(k)!).push(h)
   }
+  // A hinge is a line, not a point. Two regions that merely graze each other
+  // for a fraction of a pixel are not hinged — that happens when a crease
+  // overshoots its neighbour by a rounding error, and left alone it will swing
+  // a die-cut slot out of the box as if it were a flap.
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const v of vertices) {
+    minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x)
+    minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y)
+  }
+  const diagonal = Math.hypot(maxX - minX, maxY - minY) || 1
+  const minHingeLength = Math.max(tolerance * 8, diagonal * 0.002)
+
   const hinges: Hinge[] = []
   for (const group of grouped.values()) {
     const longest = group.reduce((m, h) => (len(sub(h.b, h.a)) > len(sub(m.b, m.a)) ? h : m))
@@ -73,6 +85,7 @@ export function buildFoldTree(arr: Arrangement): FoldTree {
         lo = Math.min(lo, along); hi = Math.max(hi, along)
       }
     }
+    if (hi - lo < minHingeLength) continue // a graze, not a fold line
     hinges.push({
       a: { x: longest.a.x + dir.x * lo, y: longest.a.y + dir.y * lo },
       b: { x: longest.a.x + dir.x * hi, y: longest.a.y + dir.y * hi },

@@ -74,9 +74,13 @@ export class BoxModel {
       const mesh = this.makePanelMesh(node.panel, origin, s, opts.panelMap)
       group.add(mesh)
 
-      if (opts.showLinework) {
-        const lines = this.makeLinework(node.panel, origin, s)
-        if (lines) group.add(lines)
+      // Always build the die-line overlay; `showLinework` only decides whether
+      // it starts visible. Building it lazily would leave the toggle dead for
+      // any model created while the box was unchecked.
+      const lines = this.makeLinework(node.panel, origin, s)
+      if (lines) {
+        lines.visible = opts.showLinework
+        group.add(lines)
       }
 
       const slot = slotFor(node.depth)
@@ -214,10 +218,18 @@ export class BoxModel {
     })
   }
 
-  /** World-space size of the model at the current fold, in millimetres. */
+  /**
+   * World-space size of the board at the current fold, in millimetres.
+   *
+   * Only the panel meshes are measured. The die-line overlay floats a hair
+   * proud of each face so it does not z-fight, and including it would inflate
+   * the reported box by twice that clearance.
+   */
   measure(): THREE.Box3 {
     this.object.updateWorldMatrix(true, true)
-    return new THREE.Box3().setFromObject(this.object)
+    const box = new THREE.Box3()
+    for (const v of this.views) box.expandByObject(v.mesh)
+    return box
   }
 
   dispose() {

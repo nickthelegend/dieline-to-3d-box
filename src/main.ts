@@ -127,7 +127,10 @@ function report(
     ['die-cut openings', String(tree.detached.length)],
     ['closing creases', String(Math.max(0, cycles))],
     ['—', ''],
-    ['closed box', `${dims[0].toFixed(0)} × ${dims[1].toFixed(0)} × ${dims[2].toFixed(0)} mm`],
+    // One decimal: the folded box lands within a hair of a .5 boundary on every
+    // axis, so whole millimetres flip on floating-point noise and the same
+    // carton reads differently from a PDF and from an SVG of that PDF.
+    ['closed box', `${dims[0].toFixed(1)} × ${dims[1].toFixed(1)} × ${dims[2].toFixed(1)} mm`],
     ['parse + build', `${ms.toFixed(0)} ms`],
   ]
 

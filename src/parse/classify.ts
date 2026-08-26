@@ -35,16 +35,34 @@ export function classifyByName(raw: string | null | undefined): LineType | null 
   return null
 }
 
-/** Classify from an RGB stroke colour in 0..1. Returns null if too neutral. */
+/**
+ * Classify from an RGB stroke colour in 0..1. Returns null when the colour
+ * carries no signal (grey, black, white).
+ *
+ * The decision is made on *hue*, not on how far the dominant channel beats the
+ * others. Print colours are not primaries: the slate blue conventionally used
+ * for score lines (#48778d) has its blue channel only 0.09 above green, so a
+ * channel-margin test reads it as neutral and silently downgrades a hinge to a
+ * cut — which loses a whole fold. Hue puts it at 199 degrees, unambiguously blue.
+ */
 export function classifyByColor(rgb: [number, number, number] | null): LineType | null {
   if (!rgb) return null
   const [r, g, b] = rgb
   const max = Math.max(r, g, b)
   const min = Math.min(r, g, b)
-  if (max - min < 0.2) return null // grey / black: no signal
-  if (r === max && r - Math.max(g, b) > 0.2) return 'cut'
-  if (g === max && g - Math.max(r, b) > 0.2) return 'crease'
-  if (b === max && b - Math.max(r, g) > 0.2) return 'perf'
+  const delta = max - min
+  if (max <= 0.06 || delta / max < 0.18) return null // black, white or grey
+
+  let hue: number
+  if (max === r) hue = 60 * (((g - b) / delta) % 6)
+  else if (max === g) hue = 60 * ((b - r) / delta + 2)
+  else hue = 60 * ((r - g) / delta + 4)
+  if (hue < 0) hue += 360
+
+  // Wide buckets: press reds, greens and blues vary a lot between suppliers.
+  if (hue >= 330 || hue < 20) return 'cut'
+  if (hue >= 75 && hue < 175) return 'crease'
+  if (hue >= 175 && hue < 265) return 'perf'
   return null
 }
 
