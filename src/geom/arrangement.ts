@@ -31,9 +31,8 @@ export type Arrangement = {
 }
 
 const key = (a: number, b: number) => `${a},${b}`
-const cross = (o: Vec2, a: Vec2, b: Vec2) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
 
-export function signedArea(poly: Vec2[]): number {
+function signedArea(poly: Vec2[]): number {
   let s = 0
   for (let i = 0; i < poly.length; i++) {
     const p = poly[i], q = poly[(i + 1) % poly.length]
@@ -42,7 +41,7 @@ export function signedArea(poly: Vec2[]): number {
   return s / 2
 }
 
-export function centroidOf(poly: Vec2[]): Vec2 {
+function centroidOf(poly: Vec2[]): Vec2 {
   const a = signedArea(poly)
   if (Math.abs(a) < 1e-9) {
     return poly.reduce((acc, p) => ({ x: acc.x + p.x / poly.length, y: acc.y + p.y / poly.length }), { x: 0, y: 0 })
@@ -57,7 +56,7 @@ export function centroidOf(poly: Vec2[]): Vec2 {
   return { x: cx / (6 * a), y: cy / (6 * a) }
 }
 
-export function pointInPolygon(p: Vec2, poly: Vec2[]): boolean {
+function pointInPolygon(p: Vec2, poly: Vec2[]): boolean {
   let inside = false
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const a = poly[i], b = poly[j]
@@ -266,6 +265,3 @@ function interiorPoint(poly: Vec2[]): Vec2 | null {
   }
   return null
 }
-
-/** Cross-product helper kept exported for the fold planner's orientation test. */
-export { cross }

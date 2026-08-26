@@ -14,23 +14,27 @@ let model: BoxModel | null = null
 
 /* ---------------- fold playback ---------------- */
 
+/** Seconds for a full flat -> closed fold. */
 const FOLD_SECONDS = 3.0
-let target = 0        // where the fold is heading (0 flat, 1 closed)
-let playing = false
+
+/**
+ * Playback runs off the wall clock rather than accumulated frame deltas, so a
+ * dropped frame shortens the step instead of stretching the animation — the
+ * fold takes the same three seconds on a 144 Hz display and on a throttled tab.
+ */
+let play: { from: number; to: number; startedAt: number; seconds: number } | null = null
 /** Seconds of camera-follow left to run after the fold last moved. */
 let follow = 0
 
 viewer.start((dt) => {
   if (!model) return
 
-  if (playing) {
-    const v = model.foldValue
-    const next = v + Math.sign(target - v) * (dt / FOLD_SECONDS)
-    const done = (target > v && next >= target) || (target < v && next <= target)
-    model.setFold(done ? target : next)
+  if (play) {
+    const t = Math.min(1, (performance.now() - play.startedAt) / 1000 / play.seconds)
+    model.setFold(play.from + (play.to - play.from) * t)
     $<HTMLInputElement>('scrub').value = String(Math.round(model.foldValue * 1000))
     follow = 0.5
-    if (done) { playing = false; syncPlayButton() }
+    if (t >= 1) { play = null; syncPlayButton() }
   }
 
   // The sheet shrinks a lot as it closes, so ease the framing while it moves.
@@ -40,9 +44,17 @@ viewer.start((dt) => {
   }
 })
 
+function startFold(to: number) {
+  if (!model) return
+  const from = model.foldValue
+  if (Math.abs(to - from) < 1e-4) return
+  play = { from, to, startedAt: performance.now(), seconds: FOLD_SECONDS * Math.abs(to - from) }
+  syncPlayButton()
+}
+
 function syncPlayButton() {
   const closed = (model?.foldValue ?? 0) > 0.5
-  $<HTMLButtonElement>('play').textContent = playing
+  $<HTMLButtonElement>('play').textContent = play
     ? 'Folding…'
     : closed ? 'Unfold to flat' : 'Fold it closed'
 }
@@ -76,7 +88,7 @@ async function run(file: File | Blob, name: string) {
     model.setFold(0)
     const flat = model.measure()
 
-    target = 0; playing = false
+    play = null
     $<HTMLInputElement>('scrub').value = '0'
     syncPlayButton()
     viewer.frame(flat)
@@ -141,30 +153,28 @@ $('file').addEventListener('change', (e) => {
 })
 $('loadSample').addEventListener('click', loadSample)
 
+// Drop anywhere on the page, not just on the dashed box.
 const drop = $('drop')
-for (const ev of ['dragenter', 'dragover']) {
+for (const ev of ['dragenter', 'dragover'] as const) {
   addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over') })
 }
-for (const ev of ['dragleave', 'drop']) {
-  addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'drop') drop.classList.remove('over') })
-}
+addEventListener('dragleave', () => drop.classList.remove('over'))
 addEventListener('drop', (e) => {
+  e.preventDefault()
   drop.classList.remove('over')
-  const f = (e as DragEvent).dataTransfer?.files?.[0]
+  const f = e.dataTransfer?.files?.[0]
   if (f) run(f, f.name)
 })
 
 $('play').addEventListener('click', () => {
   if (!model) return
-  if (playing) { playing = false; syncPlayButton(); return }
-  target = model.foldValue > 0.5 ? 0 : 1
-  playing = true
-  syncPlayButton()
+  if (play) { play = null; syncPlayButton(); return } // click again to stop
+  startFold(model.foldValue > 0.5 ? 0 : 1)
 })
 
 $('scrub').addEventListener('input', (e) => {
   if (!model) return
-  playing = false
+  play = null
   model.setFold(Number((e.target as HTMLInputElement).value) / 1000)
   follow = 0.35
   syncPlayButton()

@@ -44,9 +44,7 @@ const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t)
 export class BoxModel {
   readonly object = new THREE.Group()
   readonly views: NodeView[] = []
-  readonly sheetSizeMm: { w: number; h: number }
   private linework: THREE.LineSegments[] = []
-  private boardMaterials: THREE.MeshStandardMaterial[] = []
   private fold = 0
 
   constructor(
@@ -56,7 +54,6 @@ export class BoxModel {
     opts: BuildOptions,
   ) {
     const s = dieline.mmPerUnit
-    this.sheetSizeMm = { w: dieline.width * s, h: dieline.height * s }
 
     // The fold maths is done with the sheet flat in XY and panels rising in +Z.
     // Tip the whole assembly so the sheet lies on the ground plane and the box
@@ -66,8 +63,7 @@ export class BoxModel {
     sheetRoot.position.y = THICKNESS_MM / 2
     this.object.add(sheetRoot)
 
-    const maxDepth = Math.max(1, ...this.tree.nodes.map((n) => n.depth))
-    const step = 1 / (maxDepth + 1)
+    const slotFor = depthSchedule(tree)
 
     const build = (node: FoldNode, parentOrigin: Vec2, parentGroup: THREE.Group) => {
       const origin = node.parent ? node.hingePoint : node.panel.centroid
@@ -83,11 +79,11 @@ export class BoxModel {
         if (lines) group.add(lines)
       }
 
-      const start = node.depth === 0 ? 0 : (node.depth - 1) * step
+      const slot = slotFor(node.depth)
       this.views.push({
         node, group, mesh,
         axis: new THREE.Vector3(node.hingeAxis.x, node.hingeAxis.y, 0).normalize(),
-        start, span: Math.min(step * 2.1, 1 - start) || 1,
+        start: slot.start, span: slot.span,
       })
 
       for (const child of node.children) build(child, origin, group)
@@ -139,7 +135,6 @@ export class BoxModel {
       roughness: 0.95,
       metalness: 0.0,
     })
-    this.boardMaterials.push(face, edge)
 
     // ExtrudeGeometry emits group 0 for the two faces and group 1 for the walls.
     const mesh = new THREE.Mesh(geo, [face, edge])
@@ -234,8 +229,45 @@ export class BoxModel {
       else mat?.dispose?.()
     })
     this.object.removeFromParent()
-    this.boardMaterials.length = 0
   }
+}
+
+/**
+ * Builds the animation schedule: each depth of the fold tree gets a slice of
+ * the 0..1 fold parameter, and consecutive slices overlap so the whole thing
+ * reads as one continuous motion rather than a set of discrete steps.
+ *
+ * The slices are sized by how much card is moving at that depth rather than
+ * split evenly, and that matters here: this carton ends in a six-deep chain of
+ * small internal lock tabs, so an even split would spend more than half the
+ * animation on panels that are already sealed inside the closed box.
+ */
+function depthSchedule(tree: FoldTree): (depth: number) => { start: number; span: number } {
+  const OVERLAP = 1.35
+  const MIN_SPAN = 0.12
+
+  const area = new Map<number, number>()
+  for (const n of tree.nodes) {
+    if (n.depth === 0) continue
+    area.set(n.depth, (area.get(n.depth) ?? 0) + n.panel.area)
+  }
+  // Square root, so a depth is weighted by how far its card sweeps rather than
+  // by how much of it there is.
+  const weight = new Map([...area].map(([d, a]) => [d, Math.sqrt(a)] as const))
+  const total = [...weight.values()].reduce((s, w) => s + w, 0) || 1
+
+  const slots = new Map<number, { start: number; span: number }>()
+  let cursor = 0
+  for (const depth of [...weight.keys()].sort((a, b) => a - b)) {
+    const share = weight.get(depth)! / total
+    const start = cursor
+    cursor += share
+    slots.set(depth, {
+      start,
+      span: Math.max(1e-3, Math.min(Math.max(share * OVERLAP, MIN_SPAN), 1 - start)),
+    })
+  }
+  return (depth) => slots.get(depth) ?? { start: 0, span: 1 }
 }
 
 /** Golden-ratio hue stepping: adjacent panels never land on the same colour. */

@@ -8,7 +8,6 @@ export class Viewer {
   readonly camera: THREE.PerspectiveCamera
   readonly renderer: THREE.WebGLRenderer
   readonly controls: OrbitControls
-  readonly ground: THREE.Mesh
   private raf = 0
   private onFrame: ((dt: number) => void) | null = null
 
@@ -43,13 +42,14 @@ export class Viewer {
     fill.position.set(-240, 140, -180)
     this.scene.add(fill)
 
-    this.ground = new THREE.Mesh(
+    // Catches the shadow only — the page background shows through it.
+    const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(4000, 4000),
       new THREE.ShadowMaterial({ opacity: 0.22 }),
     )
-    this.ground.rotation.x = -Math.PI / 2
-    this.ground.receiveShadow = true
-    this.scene.add(this.ground)
+    ground.rotation.x = -Math.PI / 2
+    ground.receiveShadow = true
+    this.scene.add(ground)
 
     this.controls = new OrbitControls(this.camera, canvas)
     this.controls.enableDamping = true
@@ -113,7 +113,7 @@ export class Viewer {
     let last = performance.now()
     const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop)
-      const dt = Math.min((now - last) / 1000, 0.05)
+      const dt = Math.min((now - last) / 1000, 0.25)
       last = now
       this.onFrame?.(dt)
       this.controls.update()
