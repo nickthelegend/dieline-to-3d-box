@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { Arrangement } from '../geom/arrangement'
+import { makeSheetTexture } from './sheetTexture'
 import type { Dieline, FoldNode, FoldTree, LineType, Panel, Vec2 } from '../geom/types'
 
 const LINE_COLOR: Record<LineType, number> = {
@@ -16,6 +17,7 @@ const THICKNESS_MM = 0.5
 export type BuildOptions = {
   showLinework: boolean
   panelMap: boolean
+  showArtwork: boolean
 }
 
 type NodeView = {
@@ -45,6 +47,8 @@ export class BoxModel {
   readonly object = new THREE.Group()
   readonly views: NodeView[] = []
   private linework: THREE.LineSegments[] = []
+  private sheet: THREE.CanvasTexture
+  private faceMaterials: THREE.MeshStandardMaterial[] = []
   private fold = 0
 
   constructor(
@@ -54,6 +58,7 @@ export class BoxModel {
     opts: BuildOptions,
   ) {
     const s = dieline.mmPerUnit
+    this.sheet = makeSheetTexture(dieline)
 
     // The fold maths is done with the sheet flat in XY and panels rising in +Z.
     // Tip the whole assembly so the sheet lies on the ground plane and the box
@@ -71,7 +76,7 @@ export class BoxModel {
       group.position.set((origin.x - parentOrigin.x) * s, (origin.y - parentOrigin.y) * s, 0)
       parentGroup.add(group)
 
-      const mesh = this.makePanelMesh(node.panel, origin, s, opts.panelMap)
+      const mesh = this.makePanelMesh(node.panel, origin, s, opts)
       group.add(mesh)
 
       // Always build the die-line overlay; `showLinework` only decides whether
@@ -99,7 +104,7 @@ export class BoxModel {
 
   /* ------------------------------------------------------------------ */
 
-  private makePanelMesh(panel: Panel, origin: Vec2, s: number, panelMap: boolean): THREE.Mesh {
+  private makePanelMesh(panel: Panel, origin: Vec2, s: number, opts: BuildOptions): THREE.Mesh {
     const toShape = (poly: Vec2[]) => {
       const path = new THREE.Shape()
       poly.forEach((p, i) => {
@@ -128,14 +133,18 @@ export class BoxModel {
     // Centre the board on its own mid-plane: that is where the crease lives.
     geo.translate(0, 0, -THICKNESS_MM / 2)
     geo.computeVertexNormals()
+    this.applySheetUVs(geo, panel, origin, s)
 
     const face = new THREE.MeshStandardMaterial({
-      color: panelMap ? panelHue(panel.id) : BOARD,
+      color: opts.panelMap ? panelHue(panel.id) : BOARD,
+      // The print goes on the faces only; the cut edge shows raw board.
+      map: opts.showArtwork ? this.sheet : null,
       roughness: 0.82,
       metalness: 0.0,
     })
+    this.faceMaterials.push(face)
     const edge = new THREE.MeshStandardMaterial({
-      color: panelMap ? panelHue(panel.id, 0.65) : BOARD_EDGE,
+      color: opts.panelMap ? panelHue(panel.id, 0.65) : BOARD_EDGE,
       roughness: 0.95,
       metalness: 0.0,
     })
@@ -146,6 +155,31 @@ export class BoxModel {
     mesh.receiveShadow = true
     mesh.userData.panelId = panel.id
     return mesh
+  }
+
+  /**
+   * Re-writes the geometry's UVs so every vertex samples the press sheet at the
+   * position that vertex actually occupies on the flat. `ExtrudeGeometry` gives
+   * UVs in the shape's own local space, which would print the whole sheet onto
+   * every panel; this maps each panel to its own window on the sheet instead.
+   *
+   * Handedness is dealt with once in `sheetTexture.ts`, which draws the sheet
+   * mirrored so the outward (-z) faces read correctly on the folded box.
+   */
+  private applySheetUVs(geo: THREE.ExtrudeGeometry, panel: Panel, origin: Vec2, s: number) {
+    const pos = geo.attributes.position
+    const uv = geo.attributes.uv
+    const sheetW = this.dieline.width
+    const sheetH = this.dieline.height
+    const mirrorAxis = panel.bbox.minX + panel.bbox.maxX
+    for (let i = 0; i < pos.count; i++) {
+      // Undo the mm scaling and the per-panel translation to recover sheet space.
+      const x = pos.getX(i) / s + origin.x
+      const y = pos.getY(i) / s + origin.y
+      const outward = pos.getZ(i) < 0
+      uv.setXY(i, (outward ? mirrorAxis - x : x) / sheetW, y / sheetH)
+    }
+    uv.needsUpdate = true
   }
 
   /**
@@ -210,6 +244,13 @@ export class BoxModel {
 
   setLinework(on: boolean) { for (const l of this.linework) l.visible = on }
 
+  setArtwork(on: boolean) {
+    for (const m of this.faceMaterials) {
+      m.map = on ? this.sheet : null
+      m.needsUpdate = true
+    }
+  }
+
   setPanelMap(on: boolean) {
     this.views.forEach((v) => {
       const mats = v.mesh.material as THREE.MeshStandardMaterial[]
@@ -241,6 +282,8 @@ export class BoxModel {
       else mat?.dispose?.()
     })
     this.object.removeFromParent()
+    this.sheet.dispose()
+    this.faceMaterials.length = 0
   }
 }
 

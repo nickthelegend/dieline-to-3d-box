@@ -176,6 +176,8 @@ export async function parseRasterDieline(file: File | Blob): Promise<Dieline> {
     width: w,
     height: h,
     mmPerUnit: (25.4 / ASSUMED_DPI) / scale,
+    // Hand the sheet back so the renderer can print it onto the panels.
+    image: canvas,
     source: 'bitmap (traced)',
     notes: [
       `traced ${segments.length - bridged} axis-aligned lines from ${w}x${h} px`,

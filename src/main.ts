@@ -79,6 +79,7 @@ async function run(file: File | Blob, name: string) {
     model = new BoxModel(dieline, arrangement, tree, {
       showLinework: $<HTMLInputElement>('tLinework').checked,
       panelMap: $<HTMLInputElement>('tPanelMap').checked,
+      showArtwork: $<HTMLInputElement>('tArtwork').checked,
     })
     viewer.scene.add(model.object)
 
@@ -186,6 +187,7 @@ $('scrub').addEventListener('input', (e) => {
 $('reset').addEventListener('click', () => { if (model) viewer.frame(model.measure()) })
 $('tLinework').addEventListener('change', (e) => model?.setLinework((e.target as HTMLInputElement).checked))
 $('tPanelMap').addEventListener('change', (e) => model?.setPanelMap((e.target as HTMLInputElement).checked))
+$('tArtwork').addEventListener('change', (e) => model?.setArtwork((e.target as HTMLInputElement).checked))
 $('tSpin').addEventListener('change', (e) => {
   viewer.controls.autoRotate = (e.target as HTMLInputElement).checked
 })

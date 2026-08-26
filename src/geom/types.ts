@@ -25,6 +25,8 @@ export type Dieline = {
   source: string
   /** Human-readable notes about how lines were classified. */
   notes: string[]
+  /** The sheet as a raster, when the source was a bitmap — used as print artwork. */
+  image?: HTMLCanvasElement
 }
 
 /** One closed region of card: a face of the planar arrangement of all linework. */

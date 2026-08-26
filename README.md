@@ -15,7 +15,7 @@ npm run dev      # http://localhost:5173 — the sample carton loads on start
 | **Stack** | Vite · TypeScript · Three.js. No framework, no PDF library. |
 | **Input** | `.pdf` and `.svg` (exact vector), `.png` / `.jpg` (traced) |
 | **Sample** | `public/sample_dieline.pdf` — parses in ~30 ms, 18 panels, 17 hinges |
-| **Result** | a closed **155 × 96 × 18 mm** carton |
+| **Result** | a closed **154.5 × 95.5 × 17.5 mm** carton |
 
 Other commands:
 
@@ -152,7 +152,8 @@ slider scrubs the same parameter by hand.
 
 ## What it found in the sample
 
-`npm run check` prints this. The sample is a 154 × 95 × 16.5 mm carton:
+`npm run check` prints the tree below — the role labels on the right are added
+here for reading. The sample is a 154 × 95 × 16.5 mm carton:
 
 ```
 fold tree — 16 panels folded, 17 hinges, 2 closing creases, 2 detached
@@ -200,8 +201,21 @@ classifies pixels by hue, collects long single-colour runs, and reconstructs the
 outline; curves are recovered as chamfers by a corner-bridging pass that only
 joins mutually-nearest, perpendicular loose ends. On the bundled PNG it finds 15
 of the 18 panels — the three it misses are entirely bounded by curves — and folds
-to the same 155 × 96 × 18 mm box. Physical size is assumed from 300 dpi, since a
+to the same 154.5 × 95.5 × 17.5 mm box. Physical size is assumed from 300 dpi, since a
 bitmap carries no units.
+
+**Printing the sheet on the box.** One texture is built for the whole press
+sheet, and each panel's UVs are its own position on that sheet — so a panel that
+folds to the back of the box carries the part of the flat that was printed there.
+For a bitmap dieline the uploaded image *is* the sheet, so real artwork shows on
+the folded box; for vector input the parsed linework is drawn instead. Verified
+by mapping a labelled sheet: FRONT, BACK, TOP and BASE each land on the right
+face. **Known limitation:** the board is printed on both faces from one sheet
+image, so text on the top and bottom panels reads mirrored when viewed head-on
+from directly above or below. It reads correctly from the normal three-quarter
+product angle. Fixing it properly needs per-panel handedness derived from each
+panel's folded orientation, which is not done — the toggle is there so it can be
+turned off.
 
 **Not handled.** Non-planar or curved creases; panels that must bend rather than
 hinge; collision between panels (the fold is kinematic, not physical); dielines
@@ -226,6 +240,7 @@ src/
     foldTree.ts     crease graph → spanning tree, hinge axes, fold angles
   view/
     scene.ts        renderer, lighting, orbit, camera framing
+    sheetTexture.ts one texture of the whole press sheet
     boxModel.ts     fold tree → Three.js hierarchy + the fold animation
   main.ts           upload, pipeline, UI wiring
 tools/
