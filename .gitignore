@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+*.log
+
+# Confidential candidate brief — not redistributed
+SiviQuantLabs_Build_Challenge.zip
+challenge/
+.claude/

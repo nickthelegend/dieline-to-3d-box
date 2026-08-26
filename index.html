@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dieline → 3D Box</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📦</text></svg>" />
+</head>
+<body>
+  <canvas id="stage"></canvas>
+
+  <aside id="panel">
+    <header>
+      <div class="eyebrow">SIVI QUANT LABS · BUILD CHALLENGE 01</div>
+      <h1>Dieline <span>→</span> 3D Box</h1>
+      <p class="sub">Reads a flat cutting layout, finds the panels and creases, and folds it closed.</p>
+    </header>
+
+    <section class="drop" id="drop">
+      <input type="file" id="file" accept=".pdf,.svg,.png,.jpg,.jpeg" hidden />
+      <button id="browse" type="button">Upload a dieline</button>
+      <div class="hint">PDF · SVG · PNG &nbsp;—&nbsp; or drop it anywhere</div>
+      <button id="loadSample" class="link" type="button">reload the sample carton</button>
+    </section>
+
+    <section id="status" class="status"></section>
+
+    <section class="readout" id="readout"></section>
+
+    <section class="legend">
+      <div><i style="background:#e2453a"></i> cut — panel boundary</div>
+      <div><i style="background:#1fa65c"></i> crease — a hinge</div>
+      <div><i style="background:#3b7ddd"></i> perforated crease</div>
+    </section>
+
+    <section class="toggles">
+      <label><input type="checkbox" id="tLinework" checked /> Die lines on the board</label>
+      <label><input type="checkbox" id="tPanelMap" /> Colour panels</label>
+      <label><input type="checkbox" id="tSpin" /> Auto-rotate</label>
+    </section>
+
+    <footer>
+      <div class="mono">drag to orbit · scroll to zoom · right-drag to pan</div>
+    </footer>
+  </aside>
+
+  <div id="dock">
+    <button id="play" class="primary" type="button">Fold it closed</button>
+    <div class="scrub">
+      <input type="range" id="scrub" min="0" max="1000" value="0" />
+      <div class="ticks"><span>flat</span><span>closed</span></div>
+    </div>
+    <button id="reset" type="button">Reset view</button>
+  </div>
+
+  <div id="overlay" hidden><div class="box"><div class="spin"></div><p id="overlayText">Reading dieline…</p></div></div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
