@@ -1,0 +1,16 @@
+{
+  "voice": "af_heart",
+  "signingBeats": [],
+  "lines": [
+    { "id": "intro",       "text": "This is a dieline — the flat layout a carton is cut from. The app reads it, finds the panels, and folds it into the box." },
+    { "id": "b02_readout", "text": "It pulled two hundred and two cut lines and eighteen creases out of the file, and found eighteen panels joined by seventeen hinges." },
+    { "id": "b03_linework","text": "Red lines are cuts — they bound the panels. Green lines are creases, and every one of those is a hinge the card turns about." },
+    { "id": "b04_fold",    "text": "Now watch it close. Every crease turns exactly ninety degrees, and which way each one turns falls straight out of the geometry." },
+    { "id": "b05_orbit",   "text": "That is a real closed carton. A hundred and fifty four by ninety five by seventeen millimetres, measured off the flat." },
+    { "id": "b06_scrub",   "text": "The slider scrubs the fold, so you can stop it anywhere and watch how the panels tuck into each other." },
+    { "id": "b07_panels",  "text": "Colouring the panels shows all sixteen of them, each swinging about its own hinge line." },
+    { "id": "b08_raster",  "text": "It does not need vector input. This is the PNG, traced from pixels by colour, and it folds to exactly the same box." },
+    { "id": "b09_artwork", "text": "The artwork on the flat prints onto the box too. Each panel carries the part of the sheet that was printed there." },
+    { "id": "outro",       "text": "No box templates and no hard coded panels — just the linework and one folding rule. Thanks for watching." }
+  ]
+}

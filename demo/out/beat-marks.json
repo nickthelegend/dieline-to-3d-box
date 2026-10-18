@@ -1,0 +1,85 @@
+{
+  "takeSeconds": 103.31,
+  "result": "ok",
+  "video": "/Volumes/Extreme SSD/Projects/sivi-quant/demo/out/take.mp4",
+  "crop": {
+    "w": 1280,
+    "h": 880,
+    "x": 60,
+    "y": 120
+  },
+  "window": {
+    "x": 60,
+    "y": 30,
+    "ow": 1280,
+    "oh": 972,
+    "iw": 1280,
+    "ih": 884,
+    "dpr": 1
+  },
+  "consoleErrorsDuringTake": 0,
+  "consoleErrorSamples": [],
+  "signingBeats": [],
+  "marks": [
+    {
+      "id": "intro",
+      "captureOffsetSeconds": 0.003,
+      "audioDurationSeconds": 7.125,
+      "signing": false
+    },
+    {
+      "id": "b02_readout",
+      "captureOffsetSeconds": 8.494,
+      "audioDurationSeconds": 7.509,
+      "signing": false
+    },
+    {
+      "id": "b03_linework",
+      "captureOffsetSeconds": 18.277,
+      "audioDurationSeconds": 7.68,
+      "signing": false
+    },
+    {
+      "id": "b04_fold",
+      "captureOffsetSeconds": 27.217,
+      "audioDurationSeconds": 7.701,
+      "signing": false
+    },
+    {
+      "id": "b05_orbit",
+      "captureOffsetSeconds": 39.424,
+      "audioDurationSeconds": 7.467,
+      "signing": false
+    },
+    {
+      "id": "b06_scrub",
+      "captureOffsetSeconds": 49.71,
+      "audioDurationSeconds": 5.291,
+      "signing": false
+    },
+    {
+      "id": "b07_panels",
+      "captureOffsetSeconds": 57.674,
+      "audioDurationSeconds": 4.736,
+      "signing": false
+    },
+    {
+      "id": "b08_raster",
+      "captureOffsetSeconds": 65.066,
+      "audioDurationSeconds": 7.979,
+      "signing": false
+    },
+    {
+      "id": "b09_artwork",
+      "captureOffsetSeconds": 77.999,
+      "audioDurationSeconds": 6.187,
+      "signing": false
+    },
+    {
+      "id": "outro",
+      "captureOffsetSeconds": 91.632,
+      "audioDurationSeconds": 6.699,
+      "signing": false
+    }
+  ]
+}
